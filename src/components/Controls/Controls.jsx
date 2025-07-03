@@ -1,8 +1,16 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./Controls.module.css";
+import TextareaAutosize from "react-textarea-autosize";
 
-export function Controls({ onSend }) {
+export function Controls({ isdisabled=false, onSend }) {
   const [content, setContent] = useState("");
+  const textareaRef = useRef(null);
+
+  useEffect(() => {
+    if (!isdisabled && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [isdisabled]);
 
   function handleContentChanges(event) {
     setContent(event.target.value);
@@ -25,15 +33,19 @@ export function Controls({ onSend }) {
   return (
     <div className={styles.Controls}>
       <div className={styles.TextAreaContainer}>
-        <textarea
+        <TextareaAutosize
+          ref={textareaRef}
+          disabled={isdisabled}
           className={styles.TextArea}
           placeholder="Create Your Messages"
           value={content}
+          minRows={1}
+          maxRows={4}
           onChange={handleContentChanges}
           onKeyDown={handleEnterPress}
         />
       </div>
-      <button className={styles.Button} onClick={handleContentSend}>
+      <button disabled={isdisabled} className={styles.Button} onClick={handleContentSend}>
         <SendIcon />
       </button>
     </div>
