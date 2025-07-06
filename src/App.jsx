@@ -3,36 +3,59 @@ import { Chat } from "./components/Chat/Chat";
 import { Controls } from "./components/Controls/Controls";
 import styles from "./App.module.css";
 import { useState } from "react";
-import { AssistantOpenAI } from "./components/Assistants/openai";
 import { Loader } from "./components/Loader/Loader";
+import { AssistantGoogleAI } from "./components/Assistants/googleAi";
 
 function App() {
-  const assistant=new AssistantOpenAI();
+  const assistant=new AssistantGoogleAI();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+
+   function updateLastMessage(content) {
+  setMessages((prevMessages) =>
+    prevMessages.map((message, index) => {
+      if (index === prevMessages.length - 1) {
+        return {
+          ...message,
+          content: `${message.content}${content}`,
+        };
+      }
+      return message;
+    })
+  );
+}
 
   function addMessage(message) {
     setMessages((prevMessages) => [...prevMessages, message]);
   }
 
+ 
+
   async function handleContentSend(content) {
     addMessage({ content, role: "user" });
     setLoading(true);
     try {
-      const result = await assistant.chat(content, messages);
-      addMessage({
-        content: result,
-        role: "assistant",
-      });
+      const result = assistant.chatStream(content);
+      let isFirstChunk = false;
+      for await (const chunk of result) {
+        if(!isFirstChunk){
+          isFirstChunk = true;
+          addMessage({
+            content: "",
+            role: "assistant",
+          });
+          setLoading(false);
+        }
+        updateLastMessage(chunk);
+      }
     } catch (error) {
       console.error(error);
       addMessage({
         content: "Sorry, I could not process your request. Please try again later.",
         role: "system",
       });
-    } finally {
-      setLoading(false);
-    }
+    } 
+    setLoading(false);
   }
 
   return (
