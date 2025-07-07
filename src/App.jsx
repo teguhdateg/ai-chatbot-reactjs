@@ -10,6 +10,7 @@ function App() {
   const assistant=new AssistantGoogleAI();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
 
    function updateLastMessage(content) {
   setMessages((prevMessages) =>
@@ -45,8 +46,10 @@ function App() {
             role: "assistant",
           });
           setLoading(false);
+          setIsStreaming(true);
         }
         updateLastMessage(chunk);
+        setIsStreaming(false);
       }
     } catch (error) {
       console.error(error);
@@ -54,6 +57,7 @@ function App() {
         content: "Sorry, I could not process your request. Please try again later.",
         role: "system",
       });
+      setIsStreaming(false);
     } 
     setLoading(false);
   }
@@ -70,7 +74,7 @@ function App() {
         <Chat messages={messages} />
       </div>
 
-      <Controls isdisabled={loading} onSend={handleContentSend} />
+      <Controls isdisabled={loading || isStreaming} onSend={handleContentSend} />
     </div>
   );
 }
