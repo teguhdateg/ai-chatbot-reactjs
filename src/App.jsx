@@ -4,42 +4,40 @@ import { Controls } from "./components/Controls/Controls";
 import styles from "./App.module.css";
 import { useState } from "react";
 import { Loader } from "./components/Loader/Loader";
-import { AssistantGoogleAI } from "./components/Assistants/googleAi";
+import { AssistantOpenAI } from "./components/Assistants/openai";
 
 function App() {
-  const assistant=new AssistantGoogleAI();
+  const assistant = new AssistantOpenAI();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
 
-   function updateLastMessage(content) {
-  setMessages((prevMessages) =>
-    prevMessages.map((message, index) => {
-      if (index === prevMessages.length - 1) {
-        return {
-          ...message,
-          content: `${message.content}${content}`,
-        };
-      }
-      return message;
-    })
-  );
-}
+  function updateLastMessage(content) {
+    setMessages((prevMessages) =>
+      prevMessages.map((message, index) => {
+        if (index === prevMessages.length - 1) {
+          return {
+            ...message,
+            content: `${message.content}${content}`,
+          };
+        }
+        return message;
+      })
+    );
+  }
 
   function addMessage(message) {
     setMessages((prevMessages) => [...prevMessages, message]);
   }
 
- 
-
   async function handleContentSend(content) {
     addMessage({ content, role: "user" });
     setLoading(true);
     try {
-      const result = assistant.chatStream(content);
+      const result = assistant.chatStream(content, messages);
       let isFirstChunk = false;
       for await (const chunk of result) {
-        if(!isFirstChunk){
+        if (!isFirstChunk) {
           isFirstChunk = true;
           addMessage({
             content: "",
@@ -54,11 +52,12 @@ function App() {
     } catch (error) {
       console.error(error);
       addMessage({
-        content: "Sorry, I could not process your request. Please try again later.",
+        content:
+          "Sorry, I could not process your request. Please try again later.",
         role: "system",
       });
       setIsStreaming(false);
-    } 
+    }
     setLoading(false);
   }
 
@@ -74,7 +73,10 @@ function App() {
         <Chat messages={messages} />
       </div>
 
-      <Controls isdisabled={loading || isStreaming} onSend={handleContentSend} />
+      <Controls
+        isdisabled={loading || isStreaming}
+        onSend={handleContentSend}
+      />
     </div>
   );
 }
